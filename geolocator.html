@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Geo Locator</title>
+    <style>
+      #map {
+        height: 100%;
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map #infowindow-content {
+        display: inline;
+      }
+      #pac-input {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+      }
+
+      #pac-input:focus {
+        border-color: #4d90fe;
+      }
+    </style>
+  </head>
+  <body>
+    <input id="pac-input" class="controls" type="text" placeholder="Search location">
+    <div id="map"></div>
+    <script>
+function myMap() {
+    getLocation();
+
+    function showPosition(position) {
+        var lat = position.coords.latitude;
+        var longi = position.coords.longitude;
+        var myCenter = new google.maps.LatLng(lat, longi);
+        var mapCanvas = document.getElementById("map");
+        var mapOptions = {
+            center: myCenter,
+            zoom: 20
+        };
+        var map = new google.maps.Map(mapCanvas, mapOptions);
+        var marker = new google.maps.Marker({
+            position: myCenter
+        });
+        marker.setMap(map);
+        var input = document.getElementById('pac-input');
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+        map.addListener('bounds_changed', function() {
+            searchBox.setBounds(map.getBounds());
+        });
+        var markers = [];
+        searchBox.addListener('places_changed', function() {
+            var places = searchBox.getPlaces();
+
+            if (places.length == 0) {
+                return;
+            }
+
+            // Clear out the old markers.
+            markers.forEach(function(marker) {
+                marker.setMap(null);
+            });
+            markers = [];
+            var bounds = new google.maps.LatLngBounds();
+            places.forEach(function(place) {
+                if (!place.geometry) {
+                    console.log("Returned place contains no geometry");
+                    return;
+                }
+                markers.push(new google.maps.Marker({
+                    map: map,
+                    title: place.name,
+                    position: place.geometry.location
+                }));
+
+                if (place.geometry.viewport) {
+                    bounds.union(place.geometry.viewport);
+                } else {
+                    bounds.extend(place.geometry.location);
+                }
+            });
+            map.fitBounds(bounds);
+        });
+
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+            x.innerHTML = "Geolocation is not supported by this browser.";
+        }
+    }
+
+}
+
+function showError(error) {
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            x.innerHTML = "User denied the request for Geolocation."
+            break;
+        case error.POSITION_UNAVAILABLE:
+            x.innerHTML = "Location information is unavailable."
+            break;
+        case error.TIMEOUT:
+            x.innerHTML = "The request to get user location timed out."
+            break;
+        case error.UNKNOWN_ERROR:
+            x.innerHTML = "An unknown error occurred."
+            break;
+    }
+}
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAn-hC1txu_QMxXBmLnoNXy1DAEvCuwHvA&libraries=places&callback=myMap"
+         async defer></script>
+  </body>
+</html>
